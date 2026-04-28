@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Störungsmeldung – Elisabeth-Lüders-Berufskolleg Hamm</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background: linear-gradient(135deg, rgba(20,80,180,0.92) 0%, rgba(10,40,120,0.96) 100%); display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .modal { background: rgba(255,255,255,0.97); border-radius: 16px; width: 100%; max-width: 500px; padding: 2rem; box-shadow: 0 8px 32px rgba(0,0,40,0.25); }
+    .school-header { margin-bottom: 1.2rem; padding-bottom: 1rem; border-bottom: 1.5px solid #e0e8f8; }
+    .school-name { font-size: 15px; font-weight: 500; color: #1a1a2e; }
+    .school-sub { font-size: 12px; color: #888; margin-top: 3px; }
+    .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1rem; }
+    .modal-icon { width: 36px; height: 36px; background: #1a56d6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .modal-title { font-size: 15px; font-weight: 500; color: #1a1a2e; }
+    .modal-subtitle { font-size: 12px; color: #888; margin-top: 2px; }
+    .steps { display: flex; gap: 6px; margin-bottom: 1.4rem; }
+    .step-dot { height: 3px; flex: 1; border-radius: 2px; background: #e0e0e0; transition: background 0.3s; }
+    .step-dot.active { background: #1a56d6; }
+    .step-dot.done { background: #4caf50; }
+    .section-title { font-size: 11px; font-weight: 500; color: #1a56d6; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
+    .building-list, .choice-list { display: flex; flex-direction: column; gap: 8px; }
+    .building-row, .choice-row { border: 1.5px solid #e0e8f8; border-radius: 10px; padding: 14px 16px; cursor: pointer; background: #f7f9ff; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; }
+    .building-row:hover, .choice-row:hover { border-color: #1a56d6; background: #eef3ff; }
+    .building-row.selected, .choice-row.selected { border-color: #1a56d6; background: #ddeaff; }
+    .b-name, .c-name { font-size: 14px; font-weight: 500; color: #1a1a2e; }
+    .b-sub { font-size: 12px; color: #888; margin-top: 2px; }
+    .b-arrow { color: #b0bcd4; font-size: 16px; }
+    .floor-section { margin-bottom: 12px; }
+    .floor-title { font-size: 11px; font-weight: 500; color: #1a56d6; text-transform: uppercase; letter-spacing: 0.6px; padding-bottom: 5px; border-bottom: 1px solid #e0e8f8; margin-bottom: 7px; }
+    .room-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .room-btn { border: 1.5px solid #e0e8f8; border-radius: 8px; padding: 9px 4px; cursor: pointer; background: #f7f9ff; text-align: center; font-size: 12px; font-weight: 500; color: #1a1a2e; transition: all 0.15s; }
+    .room-btn:hover { border-color: #1a56d6; background: #eef3ff; }
+    .room-btn.selected { border-color: #1a56d6; background: #ddeaff; color: #1a56d6; }
+    .error-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .error-btn { border: 1.5px solid #e0e8f8; border-radius: 8px; padding: 12px 14px; cursor: pointer; background: #f7f9ff; font-size: 13px; font-weight: 500; color: #1a1a2e; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s; }
+    .error-btn:hover { border-color: #1a56d6; background: #eef3ff; }
+    .error-btn.selected { border-color: #1a56d6; background: #ddeaff; color: #1a56d6; }
+    .faq-checklist { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .check-item { border: 1.5px solid #e0e8f8; border-radius: 10px; padding: 12px 14px; background: #f7f9ff; transition: all 0.15s; }
+    .check-item.answered-yes { border-color: #4caf50; background: #f0fbf4; }
+    .check-item.answered-no { border-color: #e53935; background: #fff5f5; }
+    .check-item.answered-dk { border-color: #888; background: #f5f5f5; }
+    .check-item.skipped { border-color: #e0e0e0; background: #f5f5f5; opacity: 0.45; pointer-events: none; }
+    .check-question { font-size: 13px; font-weight: 500; color: #1a1a2e; margin-bottom: 9px; }
+    .check-buttons { display: flex; gap: 6px; }
+    .yn-btn { flex: 1; border: 1.5px solid #d0d8ea; border-radius: 8px; padding: 7px 0; font-size: 12px; font-weight: 500; cursor: pointer; background: #fff; color: #555; transition: all 0.15s; text-align: center; }
+    .yn-btn:hover { border-color: #1a56d6; background: #eef3ff; color: #1a56d6; }
+    .yn-btn.yes.active { border-color: #4caf50; background: #4caf50; color: #fff; }
+    .yn-btn.no.active { border-color: #e53935; background: #e53935; color: #fff; }
+    .yn-btn.dk.active { border-color: #888; background: #888; color: #fff; }
+    .faq-hint { font-size: 12px; color: #e65100; background: #fff8f0; border: 1px solid #ffcc80; border-radius: 8px; padding: 9px 13px; margin-bottom: 10px; display: none; }
+    .faq-hint.visible { display: block; }
+    .info-box { background: #eef3ff; border: 1px solid #c8d9f8; border-radius: 10px; padding: 13px 15px; margin-bottom: 12px; line-height: 1.65; }
+    .info-box .info-title { font-size: 12px; font-weight: 500; color: #1a56d6; margin-bottom: 6px; }
+    .info-box .info-steps { font-size: 12px; color: #333; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+    .info-box .info-steps li { display: flex; gap: 8px; align-items: flex-start; }
+    .info-box .info-steps li .num { background: #1a56d6; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .warning-box { background: #fff8f0; border: 1px solid #ffcc80; border-radius: 10px; padding: 13px 15px; margin-bottom: 12px; font-size: 12px; color: #7a4100; line-height: 1.6; }
+    .warning-box .warning-title { font-size: 12px; font-weight: 500; color: #e65100; margin-bottom: 4px; }
+    .faq-item { border: 1.5px solid #e0e8f8; border-radius: 10px; padding: 14px; background: #f7f9ff; margin-bottom: 8px; }
+    .faq-label { font-size: 12px; font-weight: 500; color: #555; margin-bottom: 8px; }
+    .faq-item textarea { width: 100%; border: 1px solid #d0d8ea; border-radius: 7px; padding: 10px; font-size: 13px; font-family: inherit; resize: none; background: #fff; color: #1a1a2e; outline: none; }
+    .faq-item textarea:focus { border-color: #1a56d6; }
+    .mail-hint { font-size: 12px; color: #1a56d6; background: #eef3ff; border: 1px solid #c8d9f8; border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+    .btn-row { display: flex; gap: 10px; margin-top: 1.4rem; justify-content: space-between; align-items: center; }
+    .btn-back { border: 1.5px solid #d0d8ea; background: transparent; color: #666; border-radius: 8px; padding: 9px 18px; font-size: 13px; cursor: pointer; }
+    .btn-back:hover { border-color: #999; color: #333; }
+    .btn-submit { border: none; background: #1a56d6; color: #fff; border-radius: 8px; padding: 9px 22px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+    .btn-submit:hover:not(:disabled) { background: #1348b8; }
+    .btn-submit:disabled { background: #b0bcd4; cursor: not-allowed; }
+    .btn-submit.ready { background: #22a855; }
+    .btn-submit.ready:hover { background: #1a8f46; }
+    .success-box { text-align: center; padding: 0.5rem 0; }
+    .success-icon { width: 56px; height: 56px; background: #e6f9ee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; }
+    .success-title { font-size: 17px; font-weight: 500; color: #1a1a2e; margin-bottom: 8px; }
+    .summary-box { background: #f0f5ff; border-radius: 10px; padding: 14px 16px; margin: 1rem 0; font-size: 13px; color: #333; line-height: 2; text-align: left; }
+    .summary-box strong { color: #1a56d6; font-weight: 500; }
+    .success-sub { font-size: 12px; color: #888; line-height: 1.6; }
+    .step-view { display: none; }
+    .step-view.visible { display: block; }
+    .slide-in { animation: slideIn 0.2s ease; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="school-header">
+      <div class="school-name">Elisabeth-Lüders-Berufskolleg</div>
+      <div class="school-sub">Hamm &nbsp;·&nbsp; Störungs- & Servicemeldung</div>
+    </div>
+    <div class="modal-header">
+      <div class="modal-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <div>
+        <div class="modal-title">Neue Meldung</div>
+        <div class="modal-subtitle" id="stepLabel">Schritt 1 von 4 – Gebäude wählen</div>
+      </div>
+    </div>
+    <div class="steps" id="stepDots">
+      <div class="step-dot active" id="d0"></div>
+      <div class="step-dot" id="d1"></div>
+      <div class="step-dot" id="d2"></div>
+      <div class="step-dot" id="d3"></div>
+    </div>
+
+    <div id="step0" class="step-view visible">
+      <div class="section-title">Gebäude auswählen</div>
+      <div class="building-list">
+        <div class="building-row" onclick="selectBuilding(this,'A','A-Gebäude','Wirtschaftsgebäude')">
+          <div><div class="b-name">A-Gebäude</div><div class="b-sub">Wirtschaftsgebäude</div></div><span class="b-arrow">›</span>
+        </div>
+        <div class="building-row" onclick="selectBuilding(this,'C','C-Gebäude','Pavillons')">
+          <div><div class="b-name">C-Gebäude</div><div class="b-sub">Pavillons</div></div><span class="b-arrow">›</span>
+        </div>
+        <div class="building-row" onclick="selectBuilding(this,'D','D-Gebäude','Hauptgebäude')">
+          <div><div class="b-name">D-Gebäude</div><div class="b-sub">Hauptgebäude</div></div><span class="b-arrow">›</span>
+        </div>
+        <div class="building-row" onclick="selectBuilding(this,'T','Titaniastraße','')">
+          <div><div class="b-name">Titaniastraße</div></div><span class="b-arrow">›</span>
+        </div>
+        <div class="building-row" onclick="selectBuilding(this,'SH','Sporthalle','Sporthalle')">
+          <div><div class="b-name">Sporthalle</div><div class="b-sub">Sporthalle</div></div><span class="b-arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="step1" class="step-view">
+      <div class="section-title" id="buildingTitle">Raum wählen</div>
+      <div id="roomGrid"></div>
+      <div class="btn-row"><button class="btn-back" onclick="goTo(0)">← Zurück</button></div>
+    </div>
+
+    <div id="step2" class="step-view">
+      <div class="section-title">Problem auswählen</div>
+      <div class="error-grid" id="errorGrid"></div>
+      <div class="btn-row"><button class="btn-back" onclick="goTo(1)">← Zurück</button></div>
+    </div>
+
+    <div id="step2b" class="step-view">
+      <div class="section-title">Fernbedienung – Art wählen</div>
+      <div class="choice-list">
+        <div class="choice-row" onclick="selectFbType(this,'Beamer-Fernbedienung')"><div class="c-name">Beamer-Fernbedienung</div><span class="b-arrow">›</span></div>
+        <div class="choice-row" onclick="selectFbType(this,'TV-Fernbedienung')"><div class="c-name">TV-Fernbedienung</div><span class="b-arrow">›</span></div>
+        <div class="choice-row" onclick="selectFbType(this,'Apple TV-Fernbedienung')"><div class="c-name">Apple TV-Fernbedienung</div><span class="b-arrow">›</span></div>
+      </div>
+      <div class="btn-row"><button class="btn-back" onclick="goTo(2)">← Zurück</button></div>
+    </div>
+
+    <div id="step3" class="step-view">
+      <div id="faqContent"></div>
+      <div class="btn-row">
+        <button class="btn-back" onclick="backFromStep3()">← Zurück</button>
+        <button class="btn-submit" id="btnSubmit" onclick="submitForm()" disabled>Meldung abschicken ✓</button>
+      </div>
+    </div>
+
+    <div id="stepDone" class="step-view">
+      <div class="success-box">
+        <div class="success-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22a855" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="success-title">Meldung erfolgreich abgesendet</div>
+        <div class="summary-box" id="summaryBox"></div>
+        <div class="success-sub">Die Meldung wurde an die zuständige Stelle weitergeleitet.<br>Sie erhalten zeitnah eine Rückmeldung.</div>
+        <div style="margin-top:1.2rem;text-align:center">
+          <button class="btn-submit" onclick="resetForm()">Neue Meldung erstellen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = { building:null, buildingName:null, buildingSub:null, room:null, error:null, subError:null, fromFb:false };
+    const MAIL_EDV = 'apple@elbkhamm.de';
+    const MAIL_HAUSMEISTER = 'hausmeister@elbkhamm.de';
+    const EDV_ERRORS = ['Fernbedienung','WLAN','Drucker','Fernseher','Apple TV','Beamer'];
+
+    const FAQ_FB = [
+      { label: 'Fernbedienung vorhanden', yesNoOnly: true, skipRestIfNo: true },
+      { label: 'Fernbedienung aufgeladen, Batterien vorhanden?' },
+      { label: 'Fernbedienung gekoppelt' }
+    ];
+    const FAQ_DRUCKER = [ { label: 'Papier aufgefüllt' }, { label: 'Toner leer' }, { label: 'Netzwerkkabel geprüft' }, { label: 'Drucker eingeschaltet' } ];
+    const FAQ_ATV = [ { label: 'ATV Kopplung iPad funktioniert' }, { label: 'ATV Kopplung TV funktioniert' }, { label: 'ATV Steuerung funktioniert' }, { label: 'ATV Netzwerkverbindung vorhanden' }, { label: 'ATV kurz vom Strom genommen' } ];
+    const FAQ_BEAMER = [ { label: 'Einschalten möglich', yesNoOnly: true, skipRestIfNo: true }, { label: 'Bild vorhanden' }, { label: 'Steuerung mit der Fernbedienung möglich' }, { label: 'Gerät kurz vom Strom getrennt' } ];
+    const FAQ_TV = [ { label: 'Gerät lässt sich einschalten', yesNoOnly: true, skipRestIfNo: true }, { label: 'Gerät lässt sich steuern' }, { label: 'Fernbedienung vorhanden' } ];
+    const FAQ_WLAN = [ { label: 'WLAN lässt sich verbinden' }, { label: 'WLAN-Netz sichtbar' } ];
+
+    let currentFaq = [];
+    const answers = [];
+
+    const rooms = {
+      A:  { 'Erdgeschoss': ['A002','A003','A005','A006','A009','A010','A011','A012'], 'Obergeschoss': ['A104','A105','A108','A109','A112','A113','A114','A115'] },
+      C:  { 'Pavillons': ['C001','C003','C004','C006','C007','C009','C011','C013','C014','C016','C017','C019'] },
+      D:  { '1. Obergeschoss': ['D107','D109','D110','D113','D114','D115','D116'], '2. Obergeschoss': ['D203','D204','D206','D207','D210','D211','D213','D214','D216'], '3. Obergeschoss': ['D303','D305','D306','D308','D309','D310','D314','D316'], 'Untergeschoss': ['DU03','DU06','DU07','DU08'] },
+      T:  { '1. Obergeschoss': ['T1.1','T1.2','T1.3','T1.4','T1.6','T1.8'], '2. Obergeschoss': ['T2.1','T2.2','T2.3','T2.4','T2.6','T2.8'], 'Pavillons': ['TP1','TP2','TP3','TP4'], 'Sonstige': ['TPH','TSH'] },
+      SH: { 'Sporthalle': ['SH 1','SH 2','SH 3'] }
+    };
+
+    const errors = ['Fernbedienung','WLAN','Drucker','Fernseher','Apple TV','Beamer','Hausmeister'];
+    const stepLabels = ['Gebäude wählen','Raum wählen','Problem wählen','Details'];
+
+    function showStep(id) {
+      ['step0','step1','step2','step2b','step3','stepDone'].forEach(v => document.getElementById(v).classList.remove('visible'));
+      const el = document.getElementById(id);
+      el.classList.add('visible'); el.classList.remove('slide-in'); void el.offsetWidth; el.classList.add('slide-in');
+    }
+    function goTo(n) {
+      document.getElementById('stepDots').style.display = 'flex';
+      document.getElementById('stepLabel').textContent = 'Schritt ' + (n+1) + ' von 4 – ' + stepLabels[n];
+      for (let i = 0; i < 4; i++) document.getElementById('d'+i).className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+      showStep('step' + n);
+    }
+    function selectBuilding(el, id, name, sub) {
+      state.building = id; state.buildingName = name; state.buildingSub = sub;
+      document.querySelectorAll('.building-row').forEach(c => c.classList.remove('selected')); el.classList.add('selected');
+      setTimeout(() => { buildRooms(); goTo(1); }, 180);
+    }
+    function buildRooms() {
+      const grid = document.getElementById('roomGrid'); grid.innerHTML = '';
+      document.getElementById('buildingTitle').textContent = state.buildingName + ' – Raum wählen';
+      Object.entries(rooms[state.building]).forEach(([floor, list]) => {
+        const sec = document.createElement('div'); sec.className = 'floor-section';
+        sec.innerHTML = '<div class="floor-title">' + floor + '</div>';
+        const g = document.createElement('div'); g.className = 'room-grid';
+        list.forEach(r => {
+          const d = document.createElement('div'); d.className = 'room-btn'; d.textContent = r;
+          d.onclick = () => { state.room = r; document.querySelectorAll('.room-btn').forEach(c => c.classList.remove('selected')); d.classList.add('selected'); setTimeout(() => { buildErrors(); goTo(2); }, 180); };
+          g.appendChild(d);
+        });
+        sec.appendChild(g); grid.appendChild(sec);
+      });
+    }
+    function buildErrors() {
+      const grid = document.getElementById('errorGrid'); grid.innerHTML = '';
+      errors.forEach(e => {
+        const d = document.createElement('div'); d.className = 'error-btn';
+        d.innerHTML = e + '<span style="color:#b0bcd4;font-size:14px">›</span>';
+        d.onclick = () => {
+          state.error = e; state.subError = null;
+          document.querySelectorAll('.error-btn').forEach(c => c.classList.remove('selected')); d.classList.add('selected');
+          if (e === 'Fernbedienung') {
+            setTimeout(() => { state.fromFb = true; document.querySelectorAll('.choice-row').forEach(c => c.classList.remove('selected')); document.getElementById('stepLabel').textContent = 'Schritt 3 von 4 – Problem wählen'; showStep('step2b'); }, 180);
+          } else { state.fromFb = false; setTimeout(() => { buildFaq(); goTo(3); }, 180); }
+        };
+        grid.appendChild(d);
+      });
+    }
+    function selectFbType(el, type) {
+      state.subError = type; document.querySelectorAll('.choice-row').forEach(c => c.classList.remove('selected')); el.classList.add('selected');
+      setTimeout(() => { buildFaq(); goTo(3); }, 180);
+    }
+    function backFromStep3() {
+      if (state.fromFb) { document.getElementById('stepLabel').textContent = 'Schritt 3 von 4 – Problem wählen'; showStep('step2b'); }
+      else { goTo(2); }
+    }
+    function buildFaqChecklist(checks) {
+      answers.length = 0; checks.forEach(() => answers.push(null));
+      return '<div class="faq-hint" id="faqHint">Bitte alle Fragen beantworten, um die Meldung abzuschicken.</div>' +
+        '<div class="faq-checklist">' +
+        checks.map((q, i) => {
+          const btns = q.yesNoOnly
+            ? '<div class="yn-btn yes" onclick="setAnswer('+i+',\'yes\')">Ja</div><div class="yn-btn no" onclick="setAnswer('+i+',\'no\')">Nein</div>'
+            : '<div class="yn-btn yes" onclick="setAnswer('+i+',\'yes\')">Ja</div><div class="yn-btn no" onclick="setAnswer('+i+',\'no\')">Nein</div><div class="yn-btn dk" onclick="setAnswer('+i+',\'dk\')">Weiß nicht</div>';
+          return '<div class="check-item" id="chk'+i+'"><div class="check-question">' + q.label + '</div><div class="check-buttons">' + btns + '</div></div>';
+        }).join('') + '</div>';
+    }
+    function buildFaq() {
+      const label = state.subError || state.error;
+      const isFb = state.error === 'Fernbedienung';
+      const isDrucker = state.error === 'Drucker';
+      const isATV = state.error === 'Apple TV';
+      const isBeamer = state.error === 'Beamer';
+      const isTV = state.error === 'Fernseher';
+      const isWlan = state.error === 'WLAN';
+      const isAppleTVFb = state.subError === 'Apple TV-Fernbedienung';
+      const isHausmeister = state.error === 'Hausmeister';
+      const isEdv = EDV_ERRORS.includes(state.error);
+      const needsFaq = isFb || isDrucker || isATV || isBeamer || isTV || isWlan;
+      currentFaq = isFb ? FAQ_FB : isDrucker ? FAQ_DRUCKER : isATV ? FAQ_ATV : isBeamer ? FAQ_BEAMER : isTV ? FAQ_TV : isWlan ? FAQ_WLAN : [];
+
+      let html = '<div class="section-title">Meldung – ' + label + '</div>';
+      if (isAppleTVFb) {
+        html += '<div class="info-box"><div class="info-title">Tipp: Apple TV über das iPad steuern</div><ul class="info-steps">' +
+          '<li><span class="num">1</span><span>iPad entsperren und von oben rechts nach unten wischen, um das <strong>Kontrollzentrum</strong> zu öffnen.</span></li>' +
+          '<li><span class="num">2</span><span>Das Symbol <strong>Apple TV Remote</strong> im Kontrollzentrum antippen.</span></li>' +
+          '<li><span class="num">3</span><span>Das gewünschte Apple TV auswählen und direkt steuern.</span></li>' +
+          '</ul></div>';
+      }
+      if (isATV) {
+        html += '<div class="warning-box"><div class="warning-title">Hinweis</div>Das Streamen von Inhalten über Dienste wie Netflix, YouTube o.ä. ist über das iPad <strong>nicht möglich</strong>. Bitte dafür die direkt auf dem <strong>Apple TV installierten Apps</strong> verwenden.</div>';
+      }
+      if (needsFaq) html += buildFaqChecklist(currentFaq);
+      html += '<div class="faq-item"><div class="faq-label">Beschreibung</div><textarea id="faq_desc" rows="4" placeholder="Bitte das Problem so genau wie möglich beschreiben …"></textarea></div>';
+      const mailAddr = isHausmeister ? MAIL_HAUSMEISTER : isEdv ? MAIL_EDV : null;
+      if (mailAddr) html += '<div class="mail-hint">Diese Meldung wird per E-Mail gesendet an: <strong>' + mailAddr + '</strong></div>';
+      document.getElementById('faqContent').innerHTML = html;
+      updateSubmitBtn(!needsFaq);
+    }
+    function updateSubmitBtn(ready) {
+      const btn = document.getElementById('btnSubmit');
+      btn.disabled = !ready;
+      ready ? btn.classList.add('ready') : btn.classList.remove('ready');
+    }
+    function setAnswer(i, val) {
+      answers[i] = val;
+      const item = document.getElementById('chk' + i);
+      item.classList.remove('answered-yes','answered-no','answered-dk','skipped');
+      item.classList.add(val === 'yes' ? 'answered-yes' : val === 'no' ? 'answered-no' : 'answered-dk');
+      const btns = item.querySelectorAll('.yn-btn');
+      btns[0]?.classList.toggle('active', val === 'yes');
+      btns[1]?.classList.toggle('active', val === 'no');
+      btns[2]?.classList.toggle('active', val === 'dk');
+      if (currentFaq[i]?.skipRestIfNo && val === 'no') {
+        for (let j = i + 1; j < currentFaq.length; j++) {
+          answers[j] = 'skip';
+          const next = document.getElementById('chk' + j);
+          if (next) { next.classList.remove('answered-yes','answered-no','answered-dk'); next.classList.add('skipped'); next.querySelectorAll('.yn-btn').forEach(b => b.classList.remove('active')); }
+        }
+      }
+      if (currentFaq[i]?.skipRestIfNo && val !== 'no') {
+        for (let j = i + 1; j < currentFaq.length; j++) {
+          if (answers[j] === 'skip') {
+            answers[j] = null;
+            const next = document.getElementById('chk' + j);
+            if (next) { next.classList.remove('skipped','answered-yes','answered-no','answered-dk'); next.querySelectorAll('.yn-btn').forEach(b => b.classList.remove('active')); }
+          }
+        }
+      }
+      const allAnswered = answers.every(a => a !== null);
+      const hint = document.getElementById('faqHint');
+      updateSubmitBtn(allAnswered);
+      if (hint) allAnswered ? hint.classList.remove('visible') : hint.classList.add('visible');
+    }
+    function submitForm() {
+      const desc = document.getElementById('faq_desc')?.value || '–';
+      const label = state.subError || state.error;
+      const isEdv = EDV_ERRORS.includes(state.error);
+      const valLabel = { yes: 'Ja', no: 'Nein', dk: 'Weiß nicht', skip: '–' };
+      const valColor = { yes: '#2e7d32', no: '#c62828', dk: '#666', skip: '#aaa' };
+      let checkedLine = '';
+      let checkedHTML = '';
+      if (currentFaq.length > 0) {
+        checkedLine = '\nPrüfung: ' + currentFaq.map((q, i) => answers[i] !== 'skip' ? q.label + ': ' + valLabel[answers[i]] : null).filter(Boolean).join(' | ');
+        checkedHTML = '<br><strong>Prüfung</strong>&nbsp;&nbsp;' + currentFaq.map((q, i) =>
+          answers[i] !== 'skip' ? q.label + ': <span style="color:' + valColor[answers[i]] + '">' + valLabel[answers[i]] + '</span>' : null
+        ).filter(Boolean).join(' &nbsp;|&nbsp; ');
+      }
+      const buildingDisplay = state.buildingSub ? state.buildingName + ' – ' + state.buildingSub : state.buildingName;
+      document.getElementById('summaryBox').innerHTML =
+        '<strong>Schule</strong>&nbsp;&nbsp;Elisabeth-Lüders-Berufskolleg, Hamm<br>' +
+        '<strong>Gebäude</strong>&nbsp;&nbsp;' + buildingDisplay + '<br>' +
+        '<strong>Raum</strong>&nbsp;&nbsp;' + state.room + '<br>' +
+        '<strong>Problem</strong>&nbsp;&nbsp;' + label + checkedHTML +
+        '<br><strong>Beschreibung</strong>&nbsp;&nbsp;' + desc;
+      const mailAddr = state.error === 'Hausmeister' ? MAIL_HAUSMEISTER : isEdv ? MAIL_EDV : null;
+      if (mailAddr) {
+        const subject = encodeURIComponent('Störungsmeldung: ' + label + ' – ' + state.buildingName + ', Raum ' + state.room);
+        const body = encodeURIComponent('Störungsmeldung\n===============\nSchule:    Elisabeth-Lüders-Berufskolleg, Hamm\nGebäude:   ' + buildingDisplay + '\nRaum:      ' + state.room + '\nProblem:   ' + label + checkedLine + '\n\nBeschreibung:\n' + desc);
+        window.location.href = 'mailto:' + mailAddr + '?subject=' + subject + '&body=' + body;
+      }
+      document.getElementById('stepDots').style.display = 'none';
+      document.getElementById('stepLabel').textContent = 'Meldung abgesendet';
+      showStep('stepDone');
+    }
+    function resetForm() {
+      Object.keys(state).forEach(k => state[k] = null); state.fromFb = false;
+      currentFaq.length = 0; answers.length = 0;
+      document.querySelectorAll('.building-row').forEach(c => c.classList.remove('selected'));
+      goTo(0);
+    }
+  </script>
+</body>
+</html>
